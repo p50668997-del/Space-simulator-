@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#07152f">
+<title>SPACE MISSION SIMULATOR</title>
+<style>
+:root{--bg:#061126;--panel:#0c1d3b;--panel2:#10264b;--line:#244b82;--blue:#24a8ff;--cyan:#42e5ff;--text:#edf6ff;--muted:#a8bdd8;--green:#36d995;--yellow:#ffd166;--red:#ff6878}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 75% 0%,#153c70 0,#091a37 38%,#040b19 100%);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh}
+header{padding:22px 16px 15px;text-align:center;border-bottom:1px solid var(--line);background:#07152fdc}
+.kicker{font-size:.75rem;letter-spacing:.2em;color:var(--cyan);font-weight:800}.brand{font-size:clamp(1.45rem,5vw,2.6rem);font-weight:900;letter-spacing:.035em;margin:6px 0;text-shadow:0 0 22px #168bff}.subtitle{color:var(--muted);font-size:.95rem}
+nav{display:flex;gap:8px;overflow-x:auto;padding:12px;max-width:1100px;margin:auto}
+nav button,.btn{border:1px solid var(--line);background:#10264b;color:var(--text);padding:11px 14px;border-radius:12px;font-weight:700;white-space:nowrap}
+nav button.active,.btn.primary{background:linear-gradient(120deg,#0879e9,#04b8dc);border-color:#55d8ff;color:white}
+main{max-width:1100px;margin:0 auto;padding:14px}
+.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:13px}
+.card{background:linear-gradient(145deg,#10264beF,#091a35f2);border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:0 12px 30px #0004}
+.card h2,.card h3{margin:0 0 12px}.muted{color:var(--muted)}.big{font-size:1.65rem;font-weight:850}.tag{display:inline-block;padding:5px 9px;border-radius:20px;background:#123b55;color:#83eaff;font-size:.78rem;font-weight:800}
+.stat{display:flex;justify-content:space-between;gap:12px;margin:13px 0 6px}.bar{height:11px;border-radius:20px;background:#263c5c;overflow:hidden}.fill{height:100%;width:50%;border-radius:20px;background:linear-gradient(90deg,#0788f7,#42e5ff)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{cursor:pointer}.btn:active{transform:scale(.98)}button:disabled{opacity:.45}
+select,input{background:#07152f;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px;width:100%;margin:5px 0 12px}
+label{display:block;color:var(--muted);font-size:.9rem}
+.notice{padding:12px;border-radius:12px;background:#102e50;border-left:4px solid var(--cyan);margin:10px 0}.warning{border-left-color:var(--yellow)}.danger{border-left-color:var(--red)}
+.event{padding:12px;border:1px solid var(--line);border-radius:12px;margin:9px 0;background:#071832}
+footer{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 12px}
+.small{font-size:.82rem}.resource-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:420px){main{padding:10px}.card{padding:13px}.resource-grid{grid-template-columns:1fr 1fr}nav{padding:9px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">CENTRE DE CONTRÔLE SPATIAL • PROTOTYPE</div>
+  <div class="brand">🚀 SPACE MISSION SIMULATOR</div>
+  <div class="subtitle">Gestion et simulation d'une mission spatiale</div>
+  <div style="margin-top:10px"><span class="tag">Projet indépendant • Données NASA DONKI</span></div>
+</header>
+<nav aria-label="Navigation principale">
+  <button class="active" data-page="accueil">Accueil</button>
+  <button data-page="mission">Mission</button>
+  <button data-page="nasa">NASA DONKI</button>
+  <button data-page="alertes">Alertes</button>
+</nav>
+<main>
+<section id="accueil" class="page active">
+ <div class="grid">
+  <article class="card">
+   <h2>🛰️ État de la mission</h2><span class="tag" id="status">PRÊT AU LANCEMENT</span>
+   <p class="muted">Destination sélectionnée</p><div class="big" id="homeDest">MARS</div>
+   <p>Jour de mission : <b id="homeDay">0 / 7</b></p>
+   <p class="muted small">Simulation pédagogique : les valeurs ne représentent pas une mission réelle.</p>
+   <div class="actions"><button class="btn primary" onclick="showPage('mission')">Ouvrir la mission</button></div>
+  </article>
+  <article class="card">
+   <h2>📊 Ressources de la base</h2>
+   <div id="homeResources"></div>
+  </article>
+  <article class="card">
+   <h2>☀️ Météo spatiale</h2>
+   <p id="nasaSummary" class="muted">Aucune vérification effectuée.</p>
+   <button class="btn" onclick="showPage('nasa')">Consulter NASA DONKI</button>
+  </article>
+  <article class="card">
+   <h2>🛡️ État de sécurité</h2>
+   <div id="homeAlert" class="notice">En attente des données de mission.</div>
+   <p class="muted small">Les alertes de ressources proviennent de la simulation. Les événements solaires sont affichés séparément.</p>
+  </article>
+ </div>
+</section>
+<section id="mission" class="page">
+ <div class="card">
+  <h2>🪐 Préparer la mission</h2>
+  <div class="grid">
+   <div><label for="destination">Destination</label><select id="destination"><option value="MARS">Mars</option><option value="LUNE">Lune</option></select></div>
+   <div><label for="crew">Nombre d'astronautes</label><select id="crew"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+  </div>
+  <div class="actions">
+   <button class="btn primary" onclick="startMission()">Démarrer / réinitialiser la mission</button>
+   <button class="btn" onclick="nextDay()">Passer au jour suivant</button>
+  </div>
+  <div class="notice">Chaque journée consomme des ressources. Construire des installations aide la base à tenir plus longtemps. Les coefficients sont des hypothèses de simulation, pas des modèles certifiés de la NASA.</div>
+ </div>
+ <div class="card" style="margin-top:13px">
+  <h2>📦 Réserves et installations</h2><div id="resources"></div>
+  <div class="actions">
+   <button class="btn" onclick="build('solaire')">☀️ Centrale solaire (3 matériaux)</button>
+   <button class="btn" onclick="build('serre')">🌱 Serre (3 matériaux)</button>
+   <button class="btn" onclick="build('recyclage')">💧 Recyclage (3 matériaux)</button>
+   <button class="btn" onclick="build('bouclier')">🛡️ Bouclier (3 matériaux)</button>
+   <button class="btn" onclick="emergency()">Réserves de secours</button>
+  </div>
+  <p class="muted small" id="buildings">Installations : aucune.</p>
+  <div id="missionMessage" class="notice">Choisis une destination puis démarre la mission.</div>
+ </div>
+</section>
+<section id="nasa" class="page">
+ <div class="card">
+  <h2>☀️ NASA DONKI — Événements CME</h2>
+  <p class="muted">Cette page interroge l'API publique DONKI de la NASA pour rechercher les événements CME des 7 derniers jours.</p>
+  <div class="notice warning">La disponibilité dépend de la connexion Internet et des limites de l'API. Si le navigateur bloque la requête locale, utilise ton script Python NASA déjà testé dans Pydroid 3. Ne présente jamais un exemple simulé comme une observation réelle.</div>
+  <button class="btn primary" id="fetchBtn" onclick="fetchNASA()">Récupérer les données NASA</button>
+  <p id="fetchStatus" class="muted small">Aucune requête effectuée.</p>
+  <div id="events"></div>
+ </div>
+</section>
+<section id="alertes" class="page">
+ <div class="card">
+  <h2>🚨 Alertes et recommandations</h2>
+  <div id="alertsList" class="notice">Démarre une mission pour générer les alertes de ressources.</div>
+  <p class="muted small">Les recommandations sont indicatives et pédagogiques. Elles ne remplacent pas les systèmes opérationnels de sécurité spatiale.</p>
+ </div>
+</section>
+</main>
+<footer>SPACE MISSION SIMULATOR • Prototype éducatif • Non affilié à la NASA<br>Les données NASA, lorsqu'elles sont chargées, sont identifiées comme telles. Les scénarios de mission sont simulés.</footer>
+<script>
+const initial={oxygene:100,nourriture:100,eau:100,energie:75,materiaux:12,radiations:0};
+let r={...initial}, buildings={solaire:false,serre:false,recyclage:false,bouclier:false};
+let day=0, destination="MARS", crew=2, running=false, ended=false;
+const names={oxygene:"Oxygène",nourriture:"Nourriture",eau:"Eau",energie:"Énergie",materiaux:"Matériaux",radiations:"Radiations cumulées"};
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));}
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
+function bar(k,v){let color=k==='radiations'?'#ff9b43':v<25?'#ff6878':v<50?'#ffd166':'#24b6ed';return `<div class="stat"><span>${names[k]}</span><b>${Math.round(v)}%</b></div><div class="bar"><div class="fill" style="width:${Math.max(0,Math.min(100,v))}%;background:${color}"></div></div>`}
+function render(){
+ let keys=['oxygene','nourriture','eau','energie','materiaux','radiations'];
+ document.getElementById('resources').innerHTML=keys.map(k=>bar(k,r[k])).join('');
+ document.getElementById('homeResources').innerHTML=keys.slice(0,4).map(k=>bar(k,r[k])).join('');
+ document.getElementById('homeDest').textContent=destination;document.getElementById('homeDay').textContent=day+' / 7';
+ document.getElementById('status').textContent=ended?'MISSION INTERROMPUE':running?'MISSION EN COURS':'PRÊT AU LANCEMENT';
+ document.getElementById('buildings').textContent='Installations : '+Object.keys(buildings).filter(k=>buildings[k]).join(', ').toUpperCase().replaceAll(',',' • ').replace(/^$/,'aucune')+'.';
+ let low=Object.keys(r).filter(k=>['oxygene','nourriture','eau','energie'].includes(k)&&r[k]<30);
+ let alert=low.length?`Réserves faibles : ${low.map(k=>names[k]).join(', ')}. Réduire la consommation et améliorer la production.`:'Aucune réserve vitale sous le seuil de 30 %.';
+ if(r.radiations>=60)alert+=' Niveau de radiations simulé élevé : vérifier la protection.';
+ document.getElementById('homeAlert').textContent=alert;
+ document.getElementById('alertsList').innerHTML=alert;
+}
+function startMission(){destination=document.getElementById('destination').value;crew=Number(document.getElementById('crew').value);r={...initial};buildings={solaire:false,serre:false,recyclage:false,bouclier:false};day=0;running=true;ended=false;document.getElementById('missionMessage').textContent=`Mission vers ${destination} initialisée pour ${crew} astronaute(s).`;render();}
+function build(type){if(!running||ended){document.getElementById('missionMessage').textContent='Démarre une mission avant de construire.';return;}if(buildings[type]){document.getElementById('missionMessage').textContent='Installation déjà construite.';return;}if(r.materiaux<3){document.getElementById('missionMessage').textContent='Matériaux insuffisants.';return;}r.materiaux-=3;buildings[type]=true;document.getElementById('missionMessage').textContent='Installation construite : '+type+'.';render();}
+function emergency(){if(!running||ended)return;r.oxygene=Math.min(100,r.oxygene+15);r.nourriture=Math.min(100,r.nourriture+15);r.eau=Math.min(100,r.eau+15);document.getElementById('missionMessage').textContent='Réserves de secours ajoutées (ressource de jeu).';render();}
+function nextDay(){
+ if(!running||ended){document.getElementById('missionMessage').textContent='Démarre une mission active.';return;}
+ if(day>=7){document.getElementById('missionMessage').textContent='Les 7 jours sont terminés.';return;}
+ day++;
+ const factor=crew/2;
+ r.oxygene+= (buildings.serre?4:0)-5*factor;
+ r.nourriture+=(buildings.serre?7:0)-5*factor;
+ r.eau+=(buildings.recyclage?8:0)-5*factor;
+ r.energie+=(buildings.solaire?10:0)+6-12;
+ const exposure=destination==='MARS'?15:8;
+ r.radiations+=Math.max(0,exposure-(buildings.bouclier?(destination==='MARS'?12:8):0));
+ ['oxygene','nourriture','eau','energie','materiaux','radiations'].forEach(k=>r[k]=Math.max(0,Math.min(100,r[k])));
+ let failed=['oxygene','nourriture','eau','energie'].some(k=>r[k]<=0)||r.radiations>=80;
+ ended=failed||day===7;running=!ended;
+ document.getElementById('missionMessage').textContent=failed?'Mission interrompue dans ce scénario : une ressource vitale est épuisée ou le seuil de radiations simulé est atteint.':day===7?'Simulation de 7 jours terminée. Consulte le bilan des ressources.':`Bilan du jour ${day}/7 calculé.`;
+ render();
+}
+async function fetchNASA(){
+ const btn=document.getElementById('fetchBtn'),status=document.getElementById('fetchStatus'),out=document.getElementById('events');
+ btn.disabled=true;status.textContent='Connexion à l’API NASA DONKI…';out.innerHTML='';
+ const end=new Date(),start=new Date();start.setDate(end.getDate()-7);
+ const fmt=d=>d.toISOString().slice(0,10);
+ const url=`https://api.nasa.gov/DONKI/CME?startDate=${fmt(start)}&endDate=${fmt(end)}&api_key=DEMO_KEY`;
+ try{
+  const response=await fetch(url);if(!response.ok)throw new Error('HTTP '+response.status);
+  const data=await response.json();
+  status.textContent=`Données reçues depuis NASA DONKI : ${data.length} événement(s).`;
+  document.getElementById('nasaSummary').textContent=`Dernière requête : ${data.length} événement(s) CME reçus.`;
+  if(!data.length){out.innerHTML='<div class="notice">Aucun événement CME retourné pour cette période.</div>';}
+  data.slice(0,12).forEach((e,i)=>{
+   const a=(e.cmeAnalyses||[])[0]||{},div=document.createElement('div');div.className='event';
+   const date=document.createElement('b');date.textContent=`Événement ${i+1} — ${e.startTime||'Date inconnue'}`;
+   const detail=document.createElement('p');detail.textContent=`Type : ${e.type||'CME'} • Vitesse estimée : ${a.speed!=null?a.speed+' km/s':'non disponible'}`;
+   div.append(date,detail);
+   if(e.link){const link=document.createElement('a');link.href=e.link;link.target='_blank';link.rel='noopener';link.textContent='Voir la fiche NASA';link.style.color='#62d9ff';div.append(link);}
+   out.append(div);
+  });
+ }catch(err){
+  status.textContent='Impossible de récupérer les données dans ce navigateur : '+err.message;
+  document.getElementById('nasaSummary').textContent='Connexion non vérifiée — consulter le script Python NASA dans Pydroid 3.';
+  out.innerHTML='<div class="notice warning">La requête web a échoué. Cela peut venir du réseau, des limites de DEMO_KEY ou des restrictions du navigateur. Aucun événement fictif ne sera affiché comme donnée réelle. Utilise ton script Python NASA déjà fonctionnel pour récupérer le fichier donki_cache.json.</div>';
+ }finally{btn.disabled=false;}
+}
+render();
+</script>
+</body>
+</html>
